@@ -25,6 +25,17 @@
             <artifactId>flink-streaming-java_2.12</artifactId>
             <version>1.10.1</version>
         </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.16</version>
+        </dependency>
+        <!-- kafka连接 -->
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-connector-kafka-0.11_2.11</artifactId>
+            <version>1.10.1</version>
+        </dependency>
     </dependencies>
 
 </project>
