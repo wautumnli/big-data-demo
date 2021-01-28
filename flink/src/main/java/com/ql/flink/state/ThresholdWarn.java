@@ -43,6 +43,8 @@ public class ThresholdWarn extends RichFlatMapFunction<Tuple2<String, Long>, Tup
         List<Long> list = Lists.newArrayList(warnData.get().iterator());
         if (list.size() >=  count) {
             collector.collect(Tuple2.of(stringLongTuple2.f0 + "警告", list));
+            // 清空状态
+            warnData.clear();
         }
     }
 
