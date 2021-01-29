@@ -4,13 +4,11 @@ import org.apache.commons.compress.utils.Lists;
 import org.apache.flink.api.common.functions.RichFlatMapFunction;
 import org.apache.flink.api.common.state.ListState;
 import org.apache.flink.api.common.state.ListStateDescriptor;
+import org.apache.flink.api.common.state.StateTtlConfig;
+import org.apache.flink.api.common.time.Time;
 import org.apache.flink.api.java.tuple.Tuple2;
-import org.apache.flink.api.java.tuple.Tuple25;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.util.Collector;
-
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -50,6 +48,13 @@ public class ThresholdWarn extends RichFlatMapFunction<Tuple2<String, Long>, Tup
 
     @Override
     public void open(Configuration parameters) throws Exception {
+        // 设置有效期 仅用在ListStateDescriptor
+        StateTtlConfig config = StateTtlConfig
+                .newBuilder(Time.seconds(10))
+                .setUpdateType(StateTtlConfig.UpdateType.OnCreateAndWrite)
+                .setStateVisibility(StateTtlConfig.StateVisibility.NeverReturnExpired)
+                .build();
+
         // 获取warnData运行时状态
         warnData = getRuntimeContext().getListState(new ListStateDescriptor<Long>("warnData", Long.class));
     }
