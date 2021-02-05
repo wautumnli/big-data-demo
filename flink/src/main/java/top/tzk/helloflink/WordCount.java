@@ -1,4 +1,4 @@
-package top.tzk.wc;
+package top.tzk.helloflink;
 
 import org.apache.flink.api.common.operators.Order;
 import org.apache.flink.api.common.typeinfo.Types;

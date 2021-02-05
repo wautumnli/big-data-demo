@@ -1,0 +1,83 @@
+定义: Apache Flink是一个框架和分布式处理引擎,用于对无界和有界数据流进行状态计算.
+  特点:
+    <1>: 事件驱动(Event-driven)
+    <2>: 基于流的世界观(离线数据:有界流;实时数据:无界流)
+    <3>: 分层API
+    <4>: 支持事件时间(event-time)和处理时间(processing-time)语义
+    <5>: 精确一次(exactly-once)的状态一致性保证
+    <6>: 低延迟,每秒处理数百万个事件,毫秒级延迟
+    <7>: 与众多常用存储系统的连接
+    <8>: 高可用,动态扩展
+Flink部署:
+  Yarn模式:
+    Session Cluster:
+      <1>: 启动hadoop集群
+      <2>: 启动yarn-session
+        ./yarn-session.sh -n 2 -s 2 -jm 1024 -nm test -d
+        其中:
+          -n(--container): TaskManager的数量(已废弃)
+          -s(--slots): 每个TaskManager的slot数量,默认一个slot一个core,默认每个taskmanager的slot数量为1,有时可以多一些taskmanager,做冗余
+          -jm: JobManager的内存(单位:MB)
+          -tm: 每个taskmanager的内存(单位:MB)
+          -nm: yarn的appName(现在yarn的ui上的名字)
+          -d: 后台执行
+      <3>: 执行任务
+        ./flink run -c ${入口} ${.jar} --host host --port port
+      <4>: 去yarn控制台查看任务状态
+      <5>: 取消yarn-session
+        yarn application --kill ${applicationId}
+    Per Job Cluster:
+      <1>: 启动hadoop集群
+      <2>: 执行job
+        ./flink run -m yarn-cluster -c ${入口} ${.jar} --host host --port port
+  Kubernetes部署:
+    <1>: 搭建kubernetes集群
+    <2>: 配置各组件的yaml文件
+        在k8s上构建Flink Session Cluster,需要将Flink集群的组件对应的docker镜像分别在k8s上启动,包括JobManager、TaskManger、Job
+      ManagerService三个镜像服务.每个镜像服务都可以从中央镜像仓库获取.
+    <3>: 启动Flink Session Cluster
+      # 启动jobmanager-service服务
+      kubectl create -f jobmanager-service.yaml
+      # 启动jobmanager-deployment服务
+      kubectl create -f jobmanager-deployment.yaml
+      # 启动taskmanager-deployment服务
+      kubectl create -f taskmanager-deployment.yaml
+    <4>: 访问Flink UI界面
+      http://{jobManagerHost:Port}/api/v1/namespaces/default/services/flink-jobmanager:ui/proxy
+Flink运行时架构:
+  四大组件:
+    作业管理器[JobManager]: 控制一个应用程序执行的主进程,也就是说,每一个应用程序都会被一个不同的JobManager所控制执行
+    任务管理器[TaskManager]: Flink中的工作进程
+    资源管理器[ResourceManager]: 负责管理任务管理器(TaskManager)的插槽(slot)
+    分发器[Dispatcher]: 可以跨作业运行,它为应用提交提供了REST接口
+  作业提交流程: docs/任务提交流程.png
+  任务提交流程(yarn): docs/任务提交流程(yarn).png
+  任务调度原理: docs/任务调度原理.png
+  并行度: 一个特定算子的子任务(subtask)的个数被称之为并行度(parallelism)
+  TaskManager和Slots:
+    Flink中每个TaskManager都是一个JVM进程
+    默认情况下,Flink允许子任务共享slot,即使它们是不同任务的子任务.这样的结果是,一个slot可以保存作业的整个管道.
+  程序与数据流:
+    所有的Flinlk程序都是由三部分组成的:Source、TransFormation和Sink.Source负责读取数据源,Transformation负责计算,Sink负责输出
+  执行图(ExecutionGraph): StreamGraph->JobGraph->ExecutionGraph->物理执行图
+    <1>StreamGraph: 根据用户通过StreamAPI编写的代码生成的最初的图.用来表示程序的拓扑结构
+    <2>JobGraph: StreamGraph经过优化后生成了JobGraph,提交给JobManager的数据机构.主要的优化为,将多个符合条件的节点chain在一起作为一个节点.
+    <3>ExecutionGraph: JobManager根据JobGraph生成ExecutionGraph.ExecutionGraph是JobGraph的并行化版本,是调度层最核心的数据结构.
+    <4>物理执行图: JobManager根据ExecutionGraph对job进行调度后,在各个TaskManager上部署Task后形成的"图",并不是一个具体的数据结构
+  数据传输形式:
+    算子之间传输数据的形式可以是one-to-one(forwarding)的模式也可以是redistributing的模式
+    One-to-one: stream维护着分区以及元素的顺序(比如source和map之间).这意味着map算子的子任务看到的元素的个数以及顺序跟source算子的子任务生产的元素的个数、顺序相同.
+    Redistributing: stream的分区会发生改变.每一个算子的子任务依据所选择的transformation发送到数据不同的目标任务.
+  任务链: 要求并行度相同且为one-to-one
+window:
+  window类型:
+    时间窗口:
+      滚动时间窗口->param:length
+      滑动时间窗口->param:length,walk
+      会话窗口->param:timeout
+    计数窗口:
+      滚动计数窗口
+      滑动计数窗口
+  window function:
+    增量聚合函数: 每条数据到来就进行计算,ReduceFunction,AggregateFunction
+    全窗口函数: 先收集数据,最后遍历计算,ProcessWindowFunction,WindowFunction
