@@ -81,3 +81,45 @@ window:
   window function:
     增量聚合函数: 每条数据到来就进行计算,ReduceFunction,AggregateFunction
     全窗口函数: 先收集数据,最后遍历计算,ProcessWindowFunction,WindowFunction
+Flink状态:
+  算子状态(Operatior State): 算子状态的作用范围限定为算子任务
+    列表状态(List state): 将状态表示为一组数据的列表
+    联合列表状态(Union list state): 与常规列表状态的区别在于,在发生故障时,或者从保存点(savepoint)启动应用程序时如何恢复
+    广播状态(Broadcast state): 如果一个算子有多项任务,而它的每项任务状态又都相同,那么这种特殊情况最适合应用广播状态
+  键控状态(Keyed State): 根据输入流中定义的建(key)来维护和访问
+    值状态(Value state): 将状态表示为单个的值
+    列表状态(List state): 将状态表示为一组数据的列表
+    映射状态(Map state): 将状态表示为一组K-V对
+    聚合状态(Reducing state & Aggregating State): 将状态表示为一个用于聚合操作的列表
+  状态后端(State Backends):
+    MemoryStateBackend: 内存级的状态后端,会将键控状态作为内存中的对象进行管理,将它们存储在TaskManager的JVM堆上,而将checkpoint存储在JobManager的内存中.
+      特点: 快速、低延迟,但不稳定
+    FsStateBackend: 将checkpoint存到远程的持久化文件系统(FileSystem)上,而对于本地状态,跟MemoryStateBackend一样,也会存在TaskManager的JVM堆上
+      特点: 同时拥有内存级的本地访问速度,和更好的容错性
+    RocksDBStateBackend: 将所有状态序列化后,存入本地的RockDB中存储.
+ProcessFunction:
+  ProcessFunction:
+  KeyedProcessFunction:
+  CoProcessFunction:
+  ProcessJoinFunction:
+  BoradcastProcessFunction:
+  KeyedBoradcastProcessFunction:
+  ProcessWindowFunction:
+  ProcessAllWindowFunction:
+容错机制:
+  一致性检查点(checkpoint):
+    <1>: Flink故障恢复机制的核心,就是应用状态的一致性检查点.
+    <2>: 有状态流应用的一致检查点,其实就是所有任务的状态,在某个时间点的一份拷贝(一份快照);这个时间点,应该是所有任务都恰好处理完一个相同的输入数据的时候.
+  从检查点恢复状态:
+    <1>: 遇到故障后,第一步就是重启应用
+    <2>: 第二步是从checkpoint中读取状态,将状态重置;从检查点重新启动应用程序后,其内部状态与检查点完成时的状态完全相同
+    <3>: 第三步开始消费并处理检查点到故障发生之间的数据.
+  Flink检查点算法:
+    <1>: 分界线对齐:barrier向下游传递,任务会等待所有输入分区的barrier到达.
+    <2>: 对于barrier已经到达的分区,继续到达的数据会被缓存
+    <3>: 而barrier尚未到达的分区,数据会被正常处理
+  保存点(save points): Flink还提供了可以自定义的镜像保存功能,就是保存点
+    <1>: 原则上,创建保存点使用的算法与检查点完全相同,因此保存点可以认为就是具有一些额外元数据的检查点
+    <2>: Flink不会自动创建保存点,因此用户必须明确地触发创建操作
+状态一致性:
+  分类: AT-MOST-ONCE;AT-LEAST-ONCE;EXACTLY-ONCE

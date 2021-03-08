@@ -11,6 +11,7 @@ import org.apache.flink.streaming.api.functions.windowing.WindowFunction;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.util.Collector;
+import org.apache.flink.util.OutputTag;
 import top.tzk.streamAPI.beans.SensorReading;
 import top.tzk.util.FlinkUtil;
 
@@ -20,7 +21,7 @@ import top.tzk.util.FlinkUtil;
  * @Description:
  * @Modified By:
  */
-public class WindowTest_TimeWindow {
+public class WindowTest1_TimeWindow {
     public static void main(String[] args) {
         StreamExecutionEnvironment environment = FlinkUtil.getStreamExecutionEnvironment();
         DataStream<String> stringSource = environment.socketTextStream("39.97.123.131", 9090);
@@ -72,9 +73,23 @@ public class WindowTest_TimeWindow {
                     }
                 });
 
+        // 其他可选API
+        OutputTag<SensorReading> outputTag = new OutputTag<>("late");
+        SingleOutputStreamOperator<SensorReading> sumStream = sensorReadings.keyBy("id")
+                .timeWindow(Time.seconds(10))
+//                .trigger()
+//                .evictor()
+                .allowedLateness(Time.minutes(1))
+                .sideOutputLateData(outputTag)
+                .sum("temperature");
+
+        sumStream.getSideOutput(outputTag).print("late");
+
         resultStream.print("增量聚合");
 
         apply.print("全聚合");
+
+        sumStream.print("等待数据");
         FlinkUtil.execute();
     }
 }
