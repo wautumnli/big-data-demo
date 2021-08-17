@@ -1,7 +1,7 @@
-package com.ql.flink;
+package com.ql.flink.source;
 
+import com.ql.flink.SensorReading;
 import org.apache.flink.streaming.api.datastream.DataStream;
-import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
 import java.util.Arrays;

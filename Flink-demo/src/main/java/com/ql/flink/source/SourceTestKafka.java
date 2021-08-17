@@ -1,4 +1,4 @@
-package com.ql.flink;
+package com.ql.flink.source;
 
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.streaming.api.datastream.DataStream;
@@ -24,7 +24,7 @@ public class SourceTestKafka {
         properties.setProperty("auto.offset.reset", "latest");
         // 从kafka中获取
         // 第一个参数为topic，第二个是反序列化工具，第三个是kafka连接配置
-        DataStream<String> dataStream = env.addSource(new FlinkKafkaConsumer011<String>("sensor", new SimpleStringSchema(), properties));
+        DataStream<String> dataStream = env.addSource(new FlinkKafkaConsumer011<>("sensor", new SimpleStringSchema(), properties));
 
         dataStream.print();
 

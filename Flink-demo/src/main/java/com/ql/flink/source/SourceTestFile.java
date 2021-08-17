@@ -1,4 +1,4 @@
-package com.ql.flink;
+package com.ql.flink.source;
 
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
