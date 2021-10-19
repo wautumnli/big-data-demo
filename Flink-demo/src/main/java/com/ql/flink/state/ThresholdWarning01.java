@@ -79,7 +79,6 @@ public class ThresholdWarning01 extends RichFlatMapFunction<Tuple2<String, Long>
 
     @Override
     public void snapshotState(FunctionSnapshotContext context) throws Exception {
-        // TODO:什么时候进行快照
         // 在进行快照时，将数据存储到checkPointedState
         checkPointedState.clear();
         for (Tuple2<String, Long> element : bufferedData) {

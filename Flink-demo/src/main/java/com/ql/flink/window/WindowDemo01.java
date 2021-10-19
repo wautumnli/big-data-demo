@@ -2,6 +2,7 @@ package com.ql.flink.window;
 
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.windowing.time.Time;
@@ -14,7 +15,7 @@ public class WindowDemo01 {
     public static void main(String[] args) throws Exception {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         // 接收socket上的数据输入
-        DataStreamSource<String> streamSource = env.socketTextStream("hadoop001", 9999, "\n", 3);
+        DataStream<String> streamSource = env.socketTextStream("hadoop001", 9999, "\n", 3);
         streamSource.flatMap((FlatMapFunction<String, Tuple2<String, Long>>) (value, out) -> {
                     String[] words = value.split("\t");
                     for (String word : words) {

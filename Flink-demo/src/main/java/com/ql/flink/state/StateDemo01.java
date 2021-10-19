@@ -12,11 +12,9 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 public class StateDemo01 {
     public static void main(String[] args) throws Exception {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        // 开启检查点机制
-        env.enableCheckpointing(1000);
+
         // 开启检查点机制，并指定状态检查点之间的时间间隔
         env.enableCheckpointing(1000);
-
         // 其他可选配置如下：
         // 设置语义
         env.getCheckpointConfig().setCheckpointingMode(CheckpointingMode.EXACTLY_ONCE);
